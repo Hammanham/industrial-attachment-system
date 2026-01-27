@@ -118,8 +118,18 @@ jobs:
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Deploy to EKS
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
         run: |
           set -e
+          
+          # Substitute environment variables in deployment files
+          sed -i "s|\${AWS_ACCOUNT_ID}|$AWS_ACCOUNT_ID|g" k8s/backend/deployment.yaml
+          sed -i "s|\${AWS_ACCOUNT_ID}|$AWS_ACCOUNT_ID|g" k8s/frontend/deployment.yaml
+          sed -i "s|\${AWS_REGION}|$AWS_REGION|g" k8s/backend/deployment.yaml
+          sed -i "s|\${AWS_REGION}|$AWS_REGION|g" k8s/frontend/deployment.yaml
+          
           apply_path() {
             if [ -e "$1" ]; then
               echo "Applying $1"
