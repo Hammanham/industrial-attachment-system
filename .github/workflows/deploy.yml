@@ -75,9 +75,16 @@ jobs:
 
       - name: Install kubectl (user install)
         run: |
-          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          mkdir -p $HOME/.local/bin
-          install -m 0755 kubectl $HOME/.local/bin/kubectl
+          set -euo pipefail
+          KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+          if [ -z "$KUBECTL_VERSION" ]; then
+            echo "Unable to determine kubectl stable version" >&2
+            exit 1
+          fi
+          curl -L -o kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          chmod +x kubectl
+          mkdir -p "$HOME/.local/bin"
+          mv kubectl "$HOME/.local/bin/kubectl"
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Configure kubectl for EKS
