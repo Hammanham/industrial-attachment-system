@@ -95,7 +95,27 @@ jobs:
           EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
           aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
-
+            - name: Create ECR credentials secret
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+        run: |
+          # Create the namespace first if it doesn't exist
+          kubectl create namespace industrial-attachment --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Get ECR authentication token
+          ECR_TOKEN=$(aws ecr get-authorization-token --region "$AWS_REGION" --query 'authorizationData[0].authorizationToken' --output text | base64 -d | cut -d: -f2)
+          ECR_REGISTRY="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          
+          # Create the secret
+          kubectl create secret docker-registry ecr-credentials \
+            --docker-server="$ECR_REGISTRY" \
+            --docker-username=AWS \
+            --docker-password="$ECR_TOKEN" \
+            --docker-email=aws@example.com \
+            -n industrial-attachment \
+            --dry-run=client -o yaml | kubectl apply -f -
+            
       - name: Deploy to EKS
         run: |
           set -e

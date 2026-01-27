@@ -13,9 +13,11 @@ spec:
       labels:
         app: backend
     spec:
+      imagePullSecrets:
+      - name: ecr-credentials
       containers:
       - name: backend
-        image: your-registry/industrial-attachment-backend:latest
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/industrial-attachment-backend:latest
         ports:
         - containerPort: 5000
         env:
