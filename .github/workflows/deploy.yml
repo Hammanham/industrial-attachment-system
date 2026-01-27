@@ -76,12 +76,14 @@ jobs:
       - name: Install kubectl (user install)
         run: |
           set -euo pipefail
-          KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+          KUBECTL_VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt | tr -d '\r\n')
           if [ -z "$KUBECTL_VERSION" ]; then
             echo "Unable to determine kubectl stable version" >&2
             exit 1
           fi
-          curl -L -o kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          KUBECTL_URL="https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
+          echo "Downloading kubectl from: $KUBECTL_URL"
+          curl -fsSL -o kubectl "$KUBECTL_URL"
           chmod +x kubectl
           mkdir -p "$HOME/.local/bin"
           mv kubectl "$HOME/.local/bin/kubectl"
