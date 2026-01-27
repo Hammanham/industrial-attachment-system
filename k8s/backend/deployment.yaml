@@ -17,7 +17,8 @@ spec:
       - name: ecr-credentials
       containers:
       - name: backend
-        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/industrial-attachment-backend:latest
+        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/industrial-attachment-backend:${IMAGE_TAG}
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
         env:
