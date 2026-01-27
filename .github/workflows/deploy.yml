@@ -73,10 +73,12 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install kubectl
+      - name: Install kubectl (user install)
         run: |
           curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-          install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+          mkdir -p $HOME/.local/bin
+          install -m 0755 kubectl $HOME/.local/bin/kubectl
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Configure kubectl for EKS
         env:
