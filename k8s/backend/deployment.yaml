@@ -14,79 +14,113 @@ spec:
         app: backend
     spec:
       imagePullSecrets:
-      - name: ecr-credentials
+        - name: ecr-credentials
       containers:
-      - name: backend
-        image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/industrial-attachment-backend:${IMAGE_TAG}
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 5000
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: PORT
-          value: "5000"
-        - name: MONGO_URI
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mongo-uri
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: jwt-secret
-        - name: MPESA_CONSUMER_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mpesa-consumer-key
-        - name: MPESA_CONSUMER_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mpesa-consumer-secret
-        - name: MPESA_SHORTCODE
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mpesa-shortcode
-        - name: MPESA_PASSKEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: mpesa-passkey
-        - name: CLOUDINARY_CLOUD_NAME
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: cloudinary-cloud-name
-        - name: CLOUDINARY_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: cloudinary-api-key
-        - name: CLOUDINARY_API_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: app-secrets
-              key: cloudinary-api-secret
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 30
-          periodSeconds: 10
-        readinessProbe:
-          httpGet:
-            path: /health
-            port: 5000
-          initialDelaySeconds: 5
-          periodSeconds: 5
+        - name: backend
+          image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/industrial-attachment-backend:${IMAGE_TAG}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+
+          env:
+            - name: NODE_ENV
+              value: "production"
+
+            - name: PORT
+              value: "5000"
+
+            # 🔹 MongoDB (split, safe)
+            - name: MONGO_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: MONGO_USER
+
+            - name: MONGO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: MONGO_PASSWORD
+
+            - name: MONGO_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: MONGO_HOST
+
+            - name: MONGO_DB
+              valueFrom:
+                secretKeyRef:
+                  name: mongo-secrets
+                  key: MONGO_DB
+
+            # 🔹 App secrets
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: jwt-secret
+
+            - name: MPESA_CONSUMER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mpesa-consumer-key
+
+            - name: MPESA_CONSUMER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mpesa-consumer-secret
+
+            - name: MPESA_SHORTCODE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mpesa-shortcode
+
+            - name: MPESA_PASSKEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mpesa-passkey
+
+            - name: CLOUDINARY_CLOUD_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: cloudinary-cloud-name
+
+            - name: CLOUDINARY_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: cloudinary-api-key
+
+            - name: CLOUDINARY_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: cloudinary-api-secret
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
