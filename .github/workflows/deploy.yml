@@ -11,27 +11,32 @@ env:
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
-  build-and-deploy:
+  build-images:
     runs-on: ubuntu-latest
-    
+    outputs:
+      image-tag: ${{ steps.set-image-tag.outputs.IMAGE_TAG }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
-      
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
-      
+
+      - name: Set image tag output
+        id: set-image-tag
+        run: echo "::set-output name=IMAGE_TAG::${{ env.IMAGE_TAG }}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      
+
       - name: Build and push backend image
         uses: docker/build-push-action@v4
         with:
@@ -42,7 +47,7 @@ jobs:
             ${{ env.ECR_REGISTRY }}/industrial-attachment-backend:${{ env.IMAGE_TAG }}
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/industrial-attachment-backend:latest
           cache-to: type=inline
-      
+
       - name: Build and push frontend image
         uses: docker/build-push-action@v4
         with:
@@ -53,37 +58,44 @@ jobs:
             ${{ env.ECR_REGISTRY }}/industrial-attachment-frontend:${{ env.IMAGE_TAG }}
           cache-from: type=registry,ref=${{ env.ECR_REGISTRY }}/industrial-attachment-frontend:latest
           cache-to: type=inline
-      
-      - name: Set up kubectl
-        uses: azure/setup-kubectl@v3
+
+  deploy-eks:
+    needs: build-images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
         with:
-          version: 'latest'
-      
-      - name: Configure kubectl
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install kubectl
         run: |
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > kubeconfig
-          export KUBECONFIG=kubeconfig
-      
-      - name: Deploy to Kubernetes
+          curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+          install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+
+      - name: Configure kubectl for EKS
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          EKS_CLUSTER_NAME: ${{ secrets.EKS_CLUSTER_NAME }}
         run: |
-          export KUBECONFIG=kubeconfig
+          aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+      - name: Deploy to EKS
+        run: |
           kubectl apply -f k8s/namespace.yaml
           kubectl apply -f k8s/configmap.yaml
           kubectl apply -f k8s/database/
           kubectl apply -f k8s/backend/
           kubectl apply -f k8s/frontend/
           kubectl apply -f k8s/ingress.yaml
-          
-          # Rollout restart to use new images
-          kubectl rollout restart deployment/backend -n industrial-attachment
-          kubectl rollout restart deployment/frontend -n industrial-attachment
-          
-          # Wait for rollout to complete
+
+          kubectl rollout restart deployment/backend -n industrial-attachment || true
+          kubectl rollout restart deployment/frontend -n industrial-attachment || true
+
           kubectl rollout status deployment/backend -n industrial-attachment
           kubectl rollout status deployment/frontend -n industrial-attachment
-      
-      - name: Verify deployment
-        run: |
-          export KUBECONFIG=kubeconfig
-          kubectl get pods -n industrial-attachment
-          kubectl get services -n industrial-attachment
