@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# GitHub Setup Script
+# This script will help you push the project to GitHub
+
+echo "=========================================="
+echo "Industrial Attachment System - GitHub Setup"
+echo "=========================================="
+echo ""
+
+# Instructions
+echo "STEP 1: Create a new repository on GitHub"
+echo "  1. Go to https://github.com/new"
+echo "  2. Name it: industrial-attachment-system"
+echo "  3. Make it Private or Public"
+echo "  4. DO NOT initialize with README, .gitignore, or license"
+echo "  5. Click 'Create repository'"
+echo ""
+echo "STEP 2: Run these commands in your terminal:"
+echo ""
+echo "cd /path/to/industrial-attachment-system"
+echo ""
+echo "# Initialize git repository"
+echo "git init"
+echo ""
+echo "# Add all files"
+echo "git add ."
+echo ""
+echo "# Make first commit"
+echo "git commit -m \"Initial commit: Complete Industrial Attachment System\""
+echo ""
+echo "# Add your GitHub repository as remote"
+echo "# Replace YOUR_USERNAME with your GitHub username"
+echo "git remote add origin https://github.com/YOUR_USERNAME/industrial-attachment-system.git"
+echo ""
+echo "# Push to GitHub"
+echo "git branch -M main"
+echo "git push -u origin main"
+echo ""
+echo "=========================================="
+echo "DONE! Your code will be on GitHub"
+echo "=========================================="
