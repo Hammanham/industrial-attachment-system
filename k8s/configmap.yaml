@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: app-config
-  namespace: industrial-attachment
-data:
-  MPESA_CALLBACK_URL: "https://your-domain.com/api/applications/mpesa/callback"
-  MPESA_API_URL: "https://api.safaricom.co.ke"
-  APPLICATION_FEE: "500"
