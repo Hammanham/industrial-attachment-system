@@ -77,9 +77,10 @@ jobs:
 
           # Try fetching the latest stable version with retries
           KUBECTL_VERSION=$(curl -fsSL --retry 5 --retry-delay 2 https://dl.k8s.io/release/stable.txt | tr -d '\r\n') || true
+          echo "Fetched KUBECTL_VERSION: '$KUBECTL_VERSION'"
 
           # Fallback if version cannot be determined
-          if [ -z "$KUBECTL_VERSION" ]; then
+          if [ -z "$KUBECTL_VERSION" ] || ! [[ "$KUBECTL_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "Unable to determine kubectl stable version, using hardcoded v1.30.0"
             KUBECTL_VERSION="v1.30.0"
           fi
